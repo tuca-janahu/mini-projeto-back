@@ -1,6 +1,6 @@
 import express from "express"
 import dotenv from "dotenv"
-import db from "./database/configdb.ts"
+import db from "./database/configdb"
 
 // Load environment variables from .env file
 dotenv.config();
