@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "Bundler",
+    "module": "CommonJS",
+    "rootDir": "src",
     "outDir": "dist",
-    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["./*"]
+  "include": ["src"]
 }

@@ -1,29 +1,28 @@
 services:
   mongo:
     image: mongo:7.0
-    container_name: mongo_${COMPOSE_PROJECT_NAME}
+    profiles: ["local-db"]
     restart: unless-stopped
     ports:
-      - "${HOST_MONGO_PORT}:27017"
+      - "${HOST_MONGO_PORT:-27017}:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-example}
     volumes:
       - mongo-data:/data/db
       - ./init:/docker-entrypoint-initdb.d:ro
 
   mongo-express:
     image: mongo-express:1.0.2-20
-    container_name: mongo-express_${COMPOSE_PROJECT_NAME}
+    profiles: ["local-db"]
+    depends_on: [mongo]
     restart: unless-stopped
-    depends_on:
-      - mongo
     ports:
-      - "${HOST_ME_PORT}:8081"
+      - "${HOST_ME_PORT:-8081}:8081"
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_BASIC_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_BASIC_PASS:-admin}
 
 volumes:
   mongo-data:
