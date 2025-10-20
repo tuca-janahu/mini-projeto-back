@@ -1,0 +1,147 @@
+_type: export
+__export_format: 4
+__export_date: 2025-10-20T12:00:00.000Z
+__export_source: "insomnia"
+resources:
+  - _id: ws_mini_projeto
+    parentId: null
+    _type: workspace
+    name: "Mini Projeto API"
+    scope: "collection"
+
+  - _id: env_base
+    parentId: ws_mini_projeto
+    _type: environment
+    name: "Base Environment"
+    data:
+      base_url: "http://localhost:3000"
+      email_ok: "a@r.com"
+      password_ok: "12345!"
+      email_unregistered: "falha@example.com"
+      weak_password: "123"
+    environment: {}
+
+  - _id: grp_auth
+    parentId: ws_mini_projeto
+    _type: request_group
+    name: "Auth"
+
+  # REGISTER OK 
+  - _id: req_register_ok
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/register — OK"
+    method: POST
+    url: "{{ base_url }}/auth/register"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "demo+{% timestamp 'ms' %}@example.com",
+          "password": "{{ password_ok }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+
+  # REGISTER senha fraca (sem name)
+  - _id: req_register_weak
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/register — senha fraca"
+    method: POST
+    url: "{{ base_url }}/auth/register"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "weak.user@example.com",
+          "password": "{{ weak_password }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # REGISTER e-mail inválido (sem name)
+  - _id: req_register_bad_email
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/register — email inválido"
+    method: POST
+    url: "{{ base_url }}/auth/register"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "invalido",
+          "password": "{{ password_ok }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # LOGIN OK
+  - _id: req_login_ok
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/login — OK"
+    method: POST
+    url: "{{ base_url }}/auth/login"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "{{ email_ok }}",
+          "password": "{{ password_ok }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # LOGIN senha errada
+  - _id: req_login_wrong_password
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/login — senha errada"
+    method: POST
+    url: "{{ base_url }}/auth/login"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "{{ email_ok }}",
+          "password": "SenhaErrada"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # LOGIN e-mail não registrado
+  - _id: req_login_unregistered
+    parentId: grp_auth
+    _type: request
+    name: "POST /auth/login — email não registrado"
+    method: POST
+    url: "{{ base_url }}/auth/login"
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "email": "{{ email_unregistered }}",
+          "password": "{{ password_ok }}"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # GET protegido — autorizado (usa token do login OK)
+  - _id: req_protected_ok
+    parentId: grp_auth
+    _type: request
+    name: "GET /auth/protected — autorizado"
+    method: GET
+    url: "{{ base_url }}/auth/protected"
+    headers:
+      - name: Authorization
+        value: "Bearer {% response 'body', 'req_login_ok', '$.token', 'never' %}"
