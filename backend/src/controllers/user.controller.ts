@@ -1,28 +1,40 @@
 import { Request, Response } from "express";
-import { isEmailAvailable, registerUser, loginUser } from "../services/user.service";
+import {
+  isEmailAvailable,
+  registerUser,
+  loginUser,
+} from "../services/user.service";
 
 export async function checkEmail(req: Request, res: Response) {
-  const email = String(req.query.email || "").trim();
+  const email = String(req.query.email || "")
+    .trim()
+    .toLowerCase();
   if (!email) return res.status(400).json({ error: "Email obrigatório" });
   const available = await isEmailAvailable(email);
   return res.json({ available });
 }
 
 export async function register(req: Request, res: Response) {
-  if(!req.body || !!req.body.email === false || !!req.body.password === false) {
-    return  res.status(400).json({ error: "Dados obrigatórios" });
+  if (
+    !req.body ||
+    !!req.body.email === false ||
+    !!req.body.password === false
+  ) {
+    return res.status(400).json({ error: "Dados obrigatórios" });
   }
-  
+
   const { email, password } = req.body ?? {};
-  
+
   if (password.length < 6) {
     console.warn("⚠️ Senha muito fraca para o email:");
-    return res.status(400).json({ error: "Senha deve ter ao menos 6 caracteres" });
+    return res
+      .status(400)
+      .json({ error: "Senha deve ter ao menos 6 caracteres" });
   }
-  
- try {
+
+  try {
     const out = await registerUser(email, password);
-    console.log("✅ Usuário registrado:", out.email);      // <-- só loga no sucesso
+    console.log("✅ Usuário registrado:", out.email);
     return res.status(201).json(out);
   } catch (e: any) {
     if (e.message === "email_exists") {
@@ -35,19 +47,34 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  console.log("Login do usuário:" , req.body.email);
+  const email = String(req.body?.email ?? "").trim();
+  const password = String(req.body?.password ?? "");
 
-  if(!req.body || !!req.body.email === false || !!req.body.password === false) {
-    return  res.status(400).json({ error: "Dados obrigatórios" });
+  if (!email || !password) {
+    return res.status(400).json({ error: "Dados obrigatórios" });
   }
-  
-  const { email, password } = req.body ?? {};
-  
+
   try {
-    const out = await loginUser(email, password);
-    return res.json(out); 
+    const out = await loginUser(email, password); // << deve retornar { token, user }
+    console.log("Login do usuário:", email);
+    return res.json(out);
   } catch (e: any) {
-    if (e.message === "invalid_credentials") return res.status(401).json({ error: "Credenciais inválidas" });
+    const code = e?.message;
+    const VERBOSE = process.env.AUTH_VERBOSE_ERRORS === "true";
+
+    if (!VERBOSE) {
+      console.error("Falha no login: Credenciais inválidas");
+      return res.status(401).json({ error: "Credenciais inválidas" });
+    }
+    if (code === "user_not_found") {
+      console.warn("⚠️ Usuário não encontrado:", email);
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
+    if (code === "wrong_password") {
+      console.warn("⚠️ Senha incorreta para o usuário:", email);
+      return res.status(401).json({ error: "Senha incorreta" });
+    }
+    console.error("Erro inesperado no login:", e);
     return res.status(500).json({ error: "Erro ao autenticar" });
   }
 }

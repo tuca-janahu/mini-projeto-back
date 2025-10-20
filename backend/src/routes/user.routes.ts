@@ -9,8 +9,9 @@ router.post("/auth/register", ctrl.register);
 router.post("/auth/login", ctrl.login);
 router.get("/auth/check-email", ctrl.checkEmail);
 
-router.get("/auth/protected", authMiddleware, (_req, res) => {
-  res.json({ message: "Acesso autorizado" });
+router.get("/auth/protected", authMiddleware, (req, res) => {
+  const user = (req as any).user;
+  res.json({ message: "Acesso autorizado", user });
 });
 
 export default router;

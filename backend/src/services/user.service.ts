@@ -1,12 +1,22 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { User } from "../models/user.model";
+import { Types } from "mongoose";
 
-const SECRET = process.env.JWT_SECRET as string;
-if (!SECRET) throw new Error("JWT_SECRET missing");
 
-const EXPIRES = process.env.JWT_EXPIRES as unknown as number;
+function getJwtSecret(): Secret {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error("JWT_SECRET missing");
+  return s; // TS sabe que aqui é string
+}
+const SECRET: Secret = getJwtSecret();
+
+const EXPIRES: string = (process.env.JWT_EXPIRES || "3600").trim();
+
 if (!EXPIRES) throw new Error("JWT_EXPIRES missing");
+
+const DUMMY_HASH =
+  "$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36T1Zq9VHtVui1eS8aJf.eW"; // "senha" bcrypt
 
 export async function isEmailAvailable(email: string) {
   const exists = await User.exists({ email });
@@ -22,27 +32,47 @@ export async function registerUser(email: string, plainPassword: string) {
 
   try {
     const savedUser = await User.create({
-      email,
+      email: email.trim().toLowerCase(),
       password: passwordHash,
     });
     return { id: savedUser._id, email: savedUser.email };
-
   } catch (error) {
     throw new Error("registration_failed");
   }
 }
 
 export async function loginUser(email: string, plainPassword: string) {
-  const user = await User.findOne({ email });
-  if (!user) throw new Error("invalid_credentials");
+  const normEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: normEmail }).select("+password");
+
+  if (!user) {
+    // compara com hash dummy para igualar tempo de resposta
+    await bcrypt.compare(plainPassword, DUMMY_HASH);
+    const err: any = new Error("user_not_found");
+    err.status = 401;
+    throw err;
+  }
 
   const ok = await bcrypt.compare(plainPassword, user.password); // senha hasheada
-  if (!ok) throw new Error("invalid_credentials");
+  if (!ok) {
+    const err: any = new Error("wrong_password");
+    err.status = 401;
+    throw err;
+  }
 
-  const token = jwt.sign(
-    { sub: user.id.toString(), email: user.email },
-    SECRET,
-    { expiresIn: EXPIRES }
-  );
+  type Claims = { sub: string; email: string };
+
+ function issueToken(claims: Claims) {
+  const options: SignOptions = {
+    algorithm: "HS256",
+    expiresIn: Number(EXPIRES), // use configured expiration
+  };
+  return jwt.sign(claims, SECRET, options);
+}
+
+const token = issueToken({ sub: user._id.toString(), email: user.email });
   return { token };
 }
+
+
+
