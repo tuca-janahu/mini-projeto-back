@@ -145,3 +145,22 @@ resources:
     headers:
       - name: Authorization
         value: "Bearer {% response 'body', 'req_login_ok', '$.token', 'never' %}"
+
+  # -------- GET protegido — sem token (espera 401)
+  - _id: req_protected_no_token
+    parentId: grp_auth
+    _type: request
+    name: "GET /auth/protected — sem token (401)"
+    method: GET
+    url: "{{ base_url }}/auth/protected"
+
+  # -------- GET protegido — token inválido (espera 401)
+  - _id: req_protected_bad_token
+    parentId: grp_auth
+    _type: request
+    name: "GET /auth/protected — token inválido (401)"
+    method: GET
+    url: "{{ base_url }}/auth/protected"
+    headers:
+      - name: Authorization
+        value: "Bearer aaa.bbb.ccc"
