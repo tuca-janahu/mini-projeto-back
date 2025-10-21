@@ -1,22 +1,22 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-dotenv.config();
+if (process.env.VERCEL !== "1") {
+  dotenv.config(); // só local
+}
 
-const connect = async () => {
-  try {
-    mongoose.set('strictQuery', true);
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      throw new Error('MONGODB_URI environment variable is not defined');
-    }
-    await mongoose.connect(uri , {
-        dbName: process.env.MONGO_DB_NAME 
-    });
-    console.log('Database connected successfully');
-  } catch (error) {
-    console.error('Database connection error:', error);
-  }
-};
+export async function connect(): Promise<typeof mongoose> {
+  mongoose.set("strictQuery", true);
 
-export default {connect};
+  const uri = process.env.MONGODB_URI ?? process.env.MONGODB_URI_LOCAL;
+  const dbName = process.env.MONGODB_NAME ?? process.env.MONGODB_NAME_LOCAL;
+  if (!uri || !dbName) throw new Error("Mongo envs faltando");
+
+  // se já estiver conectado, só reutiliza
+  if (mongoose.connection.readyState === 1) return mongoose;
+
+  await mongoose.connect(uri, { dbName });
+  return mongoose; // <-- **retorne o mongoose**
+}
+
+export default { connect };

@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { User } from "../models/user.model";
-import { Types } from "mongoose";
+import dotenv from "dotenv";
 
+dotenv.config();
 
 function getJwtSecret(): Secret {
   const s = process.env.JWT_SECRET;
