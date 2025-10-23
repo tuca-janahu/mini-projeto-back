@@ -18,7 +18,18 @@ export async function connect(): Promise<typeof mongoose> {
   if (mongoose.connection.readyState === 1) return mongoose;
 
   await mongoose.connect(uri, { dbName });
-  return mongoose; // <-- **retorne o mongoose**
+
+   mongoose.connection.on("connected", () => {
+    console.log("✅ Mongoose conectado ao MongoDB");
+  });
+  mongoose.connection.on("error", (err) => {
+    console.error("🛑 Erro no MongoDB:", err);
+  });
+  mongoose.connection.on("disconnected", () => {
+    console.warn("⚠️ Mongoose desconectado");
+  });
+  
+  return mongoose; 
 }
 
 export default { connect };
