@@ -1,16 +1,18 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-if (process.env.VERCEL !== "1") {
-  dotenv.config(); // só local
-}
+dotenv.config();
 
 export async function connect(): Promise<typeof mongoose> {
   mongoose.set("strictQuery", true);
 
-  const uri = process.env.MONGODB_URI ?? process.env.MONGODB_URI_LOCAL;
-  const dbName = process.env.MONGODB_NAME ?? process.env.MONGODB_NAME_LOCAL;
-  if (!uri || !dbName) throw new Error("Mongo envs faltando");
+  const uri = process.env.MONGODB_URI;
+  const dbName = process.env.MONGODB_NAME;
+
+  // garante que a URI está definida em tempo de execução para satisfazer o tipo string
+  if (!uri) {
+    throw new Error("MONGODB_URI environment variable is not set");
+  }
 
   // se já estiver conectado, só reutiliza
   if (mongoose.connection.readyState === 1) return mongoose;
