@@ -22,11 +22,36 @@ export async function createExercise(
 
   const exercise = new Exercise({
     userId,
-    name,
+    name: name.trim(),
     muscleGroup,
     weightUnit,
   });
 
-  await exercise.save();
-  return exercise;
+  try {
+    await exercise.save();
+    return exercise;
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      throw new Error("E_DUPLICATE_NAME");
+    }
+    throw err;
+  }
+}
+
+export async function listExercises(
+  userId: string,
+  filters?: { muscleGroup?: MuscleGroup; weightUnit?: WeightUnit; name?: string },
+  page = 1,
+  limit = 20
+) {
+  const q: any = { userId };
+  if (filters?.muscleGroup) q.muscleGroup = filters.muscleGroup;
+  if (filters?.weightUnit) q.weightUnit = filters.weightUnit;
+  if (filters?.name) q.name = { $regex: filters.name, $options: "i" };
+
+  const [items, total] = await Promise.all([
+    Exercise.find(q).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    Exercise.countDocuments(q),
+  ]);
+  return { items, total, page, limit };
 }
