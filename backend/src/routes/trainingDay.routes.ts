@@ -12,3 +12,5 @@ router.patch("/:id", ctrl.patchDay);
 router.delete("/:id", ctrl.deleteDay);
 
 export default router;
+
+

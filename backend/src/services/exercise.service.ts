@@ -55,3 +55,68 @@ export async function listExercises(
   ]);
   return { items, total, page, limit };
 }
+
+
+export async function replaceExercise(
+  userId: string,
+  id: string,
+  data: { name: string; muscleGroup: MuscleGroup; weightUnit: WeightUnit }
+) {
+  // PUT = exige todos os campos obrigatórios
+  if (!data?.name || !data?.muscleGroup || !data?.weightUnit) {
+    throw new Error("E_MISSING_FIELDS");
+  }
+
+  try {
+    const updated = await Exercise.findOneAndUpdate(
+      { _id: id, userId },
+      {
+        name: data.name.trim(),
+        muscleGroup: data.muscleGroup,
+        weightUnit: data.weightUnit,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) return null;
+    return updated;
+  } catch (err: any) {
+    if (err?.code === 11000) throw new Error("E_DUPLICATE_NAME");
+    throw err;
+  }
+}
+
+export async function patchExercise(
+  userId: string,
+  id: string,
+  data: Partial<{ name: string; muscleGroup: MuscleGroup; weightUnit: WeightUnit; isArchived: boolean }>
+) {
+  const $set: any = {};
+  if (typeof data.name === "string") $set.name = data.name.trim();
+  if (typeof data.muscleGroup === "string") $set.muscleGroup = data.muscleGroup;
+  if (typeof data.weightUnit === "string") $set.weightUnit = data.weightUnit;
+  if (typeof data.isArchived === "boolean") $set.isArchived = data.isArchived;
+
+  // nada para atualizar → retorna o atual
+  if (Object.keys($set).length === 0) {
+    return await Exercise.findOne({ _id: id, userId });
+  }
+
+  try {
+    const updated = await Exercise.findOneAndUpdate(
+      { _id: id, userId },
+      { $set },
+      { new: true, runValidators: true }
+    );
+    if (!updated) return null;
+    return updated;
+  } catch (err: any) {
+    if (err?.code === 11000) throw new Error("E_DUPLICATE_NAME");
+    throw err;
+  }
+}
+
+export async function deleteExercise(userId: string, id: string) {
+  const deleted = await Exercise.findOneAndDelete({ _id: id, userId });
+  return deleted; // null se não existir
+}

@@ -28,6 +28,7 @@ export interface IExercise extends Document {
   nameLower: string; // auxiliar p/ unicidade case-insensitive
   muscleGroup: MuscleGroup;
   weightUnit: WeightUnit;
+  isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +78,8 @@ const exerciseSchema = new Schema<IExercise>(
       required: true,
       enum: ["kg", "stack", "bodyweight"],
     },
+
+    isArchived: { type: Boolean, default: false },
   },
   {
     timestamps: true,
