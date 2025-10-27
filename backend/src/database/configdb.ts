@@ -1,35 +1,66 @@
+// src/database/configdb.ts
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 
-dotenv.config();
+type GlobalWithMongooseCache = typeof global & {
+  __MONGO_CONN?: Promise<typeof mongoose>;
+};
 
-export async function connect(): Promise<typeof mongoose> {
-  mongoose.set("strictQuery", true);
+const g = global as GlobalWithMongooseCache;
 
-  const uri = process.env.MONGODB_URI;
-  const dbName = process.env.MONGODB_NAME;
+let cached = g.__MONGO_CONN;
 
-  // garante que a URI está definida em tempo de execução para satisfazer o tipo string
-  if (!uri) {
-    throw new Error("MONGODB_URI environment variable is not set");
-  }
+export default {
+  async connect() {
+    if (cached) return cached;
 
-  // se já estiver conectado, só reutiliza
-  if (mongoose.connection.readyState === 1) return mongoose;
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      console.error("[DB] MONGODB_URI not set");
+      throw new Error("MONGODB_URI missing");
+    }
 
-  await mongoose.connect(uri, { dbName });
+    // (opcional) se sua URI NÃO tiver /<db> no final, defina o nome do banco aqui:
+    const dbName = process.env.MONGODB_NAME; // pode ser undefined
 
-   mongoose.connection.on("connected", () => {
-    console.log("✅ Mongoose conectado ao MongoDB");
-  });
-  mongoose.connection.on("error", (err) => {
-    console.error("🛑 Erro no MongoDB:", err);
-  });
-  mongoose.connection.on("disconnected", () => {
-    console.warn("⚠️ Mongoose desconectado");
-  });
-  
-  return mongoose; 
-}
+    // LOGS úteis (sem vazar credenciais)
+    try {
+      const parsed = new URL(uri);
+      console.log("[DB] Connecting to", {
+        host: parsed.hostname,
+        hasDbInUri: !!parsed.pathname && parsed.pathname !== "/",
+        dbNameFromEnv: !!dbName,
+      });
+    } catch {
+      console.log("[DB] Connecting to a non-URL-parseable URI (SRV likely)");
+    }
 
-export default { connect };
+    cached = mongoose
+      .connect(uri, {
+        dbName: dbName || undefined,
+        // ajustes robustos p/ serverless:
+        maxPoolSize: 5,
+        minPoolSize: 1,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        // keep alive
+        autoIndex: process.env.NODE_ENV !== "production",
+      } as any)
+      .then((conn) => {
+        console.log("[DB] Connected. readyState =", conn.connection.readyState); // 1 = connected
+        return conn;
+      })
+      .catch((err) => {
+        console.error("[DB] Connect error:", {
+          name: err?.name,
+          code: err?.code,
+          message: err?.message,
+          reason: err?.reason?.message,
+        });
+        throw err;
+      });
+
+    g.__MONGO_CONN = cached;
+    return cached;
+  },
+};
