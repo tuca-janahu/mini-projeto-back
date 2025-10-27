@@ -12,4 +12,5 @@ O usuário pode criar vários exercícios diferentes (inserindo nome, grupo musc
 - Typescript
 - MongoDB
 
-
+### Link de explicação das requests:
+https://www.youtube.com/watch?v=QW2_5GJuXOs 
