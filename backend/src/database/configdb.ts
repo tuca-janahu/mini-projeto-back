@@ -11,6 +11,9 @@ const g = global as GlobalWithMongooseCache;
 
 let cached = g.__MONGO_CONN;
 
+mongoose.set("bufferCommands", false);   
+mongoose.set("strictQuery", true);
+
 export default {
   async connect() {
     if (cached) return cached;

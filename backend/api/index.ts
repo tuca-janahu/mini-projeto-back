@@ -7,9 +7,10 @@ import { connection } from "mongoose";
 let bootstrapped = false;
 async function ensureBoot() {
   if (!bootstrapped) {
+    console.log("[API] ensureBoot: connecting...");
     await db.connect();
     bootstrapped = true;
-    console.log("✅ [Vercel] DB conectado. readyState:", connection?.readyState);
+    console.log("[API] ensureBoot: connected. state =", connection.readyState);
   }
 }
 
