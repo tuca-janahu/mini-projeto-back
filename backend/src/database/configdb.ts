@@ -1,5 +1,7 @@
-// src/database/configdb.ts
 import mongoose from "mongoose";
+import dotenv from "dotenv"; 
+
+dotenv.config();
 
 type GlobalWithMongooseCache = typeof global & {
   __MONGO_CONN?: Promise<typeof mongoose>;
