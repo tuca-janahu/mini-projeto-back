@@ -23,7 +23,9 @@ export async function register(req: Request, res: Response) {
     return res.status(400).json({ error: "Dados obrigatórios" });
   }
 
-  const { email, password } = req.body ?? {};
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const password = String(req.body?.password ?? "");
+
 
   if (password.length < 6) {
     console.warn("⚠️ Senha muito fraca para o email:");
@@ -31,8 +33,13 @@ export async function register(req: Request, res: Response) {
       .status(400)
       .json({ error: "Senha deve ter ao menos 6 caracteres" });
   }
+  
 
   try {
+    // controllers/user.controller.ts - dentro de register()
+    console.log("[/auth/register] body keys:", Object.keys(req.body || {}));
+    console.log("[/auth/register] email:", String(req.body?.email || "").toLowerCase());
+
     const out = await registerUser(email, password);
     console.log("✅ Usuário registrado:", out.email);
     return res.status(201).json(out);

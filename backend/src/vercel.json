@@ -1,8 +1,5 @@
 {
-  "functions": {
-    "api/**": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "ignoreCommand": "echo Nothing to ignore"
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ]
 }

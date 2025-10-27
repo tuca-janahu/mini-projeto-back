@@ -37,7 +37,8 @@ export async function registerUser(email: string, plainPassword: string) {
       password: passwordHash,
     });
     return { id: savedUser._id, email: savedUser.email };
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[registerUser] create error:", { code: error?.code, keyValue: error?.keyValue, msg: error?.message });
     throw new Error("registration_failed");
   }
 }
