@@ -24,6 +24,7 @@ export async function register(req: Request, res: Response) {
   }
 
   const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const rawName = req.body?.name; // pode vir string, undefined, etc.
   const password = String(req.body?.password ?? "");
 
 
@@ -38,13 +39,25 @@ export async function register(req: Request, res: Response) {
   try {
     // controllers/user.controller.ts - dentro de register()
     console.log("[/auth/register] body keys:", Object.keys(req.body || {}));
-    console.log("[/auth/register] email:", String(req.body?.email || "").toLowerCase());
+    console.log("[/auth/register] email:", email, "| hasName:", rawName != null);
 
-    const out = await registerUser(email, password);
+    const out = await registerUser(email, password, rawName);
     console.log("✅ Usuário registrado:", out.email);
     return res.status(201).json(out);
   } catch (e: any) {
-    if (e.message === "email_exists") {
+   const code = e?.message;
+
+    // mapeamento de erros do service
+    if (code === "invalid_email") {
+      return res.status(400).json({ error: "Email inválido" });
+    }
+    if (code === "weak_password") {
+      return res.status(400).json({ error: "Senha fraca" });
+    }
+    if (code === "invalid_name") {
+      return res.status(400).json({ error: "Nome inválido" });
+    }
+    if (code === "email_exists") {
       console.warn("⚠️ Tentativa de registrar email já existente:", email);
       return res.status(409).json({ error: "Email já cadastrado" });
     }

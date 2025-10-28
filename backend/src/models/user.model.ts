@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document, Model, Types, HydratedDocument } from "mongoose";
 
 export interface IUser extends Document {
-  _id: Types.ObjectId;       
+  _id: Types.ObjectId;  
+  name: string,     
   email: string;
   password: string;
   createdAt: Date;
@@ -9,6 +10,7 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true, lowercase: true, index: true },
+  name: { type: String, trim: true },
   password: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
