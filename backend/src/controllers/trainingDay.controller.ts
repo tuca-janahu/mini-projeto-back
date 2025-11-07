@@ -11,6 +11,9 @@ export async function createDay(req: Request, res: Response) {
     const day = await service.createTrainingDay(userId, parsed.data.label, parsed.data.exercises);
     res.status(201).json(day);
   } catch (err: any) {
+    if (err?.code === 11000 || String(err?.message).includes("E11000")) {
+      return res.status(409).json({ code: "E_DUP_LABEL", error: "Já existe um dia com esse nome." });
+    }
     res.status(400).json({ error: err.message });
   }
 }
