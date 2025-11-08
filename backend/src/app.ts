@@ -33,7 +33,7 @@ app.use(cookieParser());
 
 // app.ts, ANTES das rotas (temporário pra debug)
 app.use(async (req, res, next) => {
-  if (req.method === "OPTIONS") return res.sendStatus(204); // CORS preflight: não abrir conexão
+  // if (req.method === "OPTIONS") return res.sendStatus(204); // CORS preflight: não abrir conexão
   if (connection.readyState !== 1) {
     try {
       console.log("[DB-GUARD] connecting on-demand for", req.method, req.path);
