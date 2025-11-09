@@ -18,9 +18,12 @@ const ORIGINS = (process.env.CORS_ORIGINS || "")
 
 const corsOptions: CorsOptions = {
   origin(origin, cb) {
-    // permite curl/Postman (sem Origin) e ORIGINS exatas
+    // permite curl/Postman (sem Origin) e libera as origens declaradas
     if (!origin) return cb(null, true);
     if (ORIGINS.includes(origin)) return cb(null, true);
+
+    // LOG útil em prod pra diagnosticar
+    console.warn("[CORS] Origin não permitida:", origin, "Permitidas:", ORIGINS);
     return cb(new Error("Not allowed by CORS"));
   },
   credentials: true,
@@ -31,11 +34,16 @@ const corsOptions: CorsOptions = {
 };
 
 app.use(cors(corsOptions));
-// **NÃO remova isso**: ele responde os preflights com os headers corretos
-app.options("*", cors(corsOptions));
+
+// Dica: garanta o Vary pra caches/reverse proxies
+app.use((_, res, next) => { res.setHeader("Vary", "Origin"); next(); });
+
+// **MANTENHA** isto ANTES de tudo que pode lançar erro
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
+
 
 app.use(async (req, res, next) => {
   // if (req.method === "OPTIONS") return res.sendStatus(204); // CORS preflight: não abrir conexão
