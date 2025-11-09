@@ -13,25 +13,30 @@ const app = express();
 
 const ORIGINS = (process.env.CORS_ORIGINS || "")
   .split(",")
-  .map((s) => s.trim())
+  .map(s => s.trim())
   .filter(Boolean);
 
 const corsOptions: CorsOptions = {
-  origin(origin, callback) {
-    // permite chamadas de ferramentas sem Origin (ex.: curl, Postman) e de origens listadas
-    if (!origin || ORIGINS.includes(origin)) return callback(null, true);
-    return callback(new Error("Not allowed by CORS"));
+  origin(origin, cb) {
+    // permite curl/Postman (sem Origin) e ORIGINS exatas
+    if (!origin) return cb(null, true);
+    if (ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error("Not allowed by CORS"));
   },
-  credentials: true, // necessário para cookies e fetch com credentials: 'include'
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 };
+
 app.use(cors(corsOptions));
-// app.options("*", cors(corsOptions)); 
+// **NÃO remova isso**: ele responde os preflights com os headers corretos
+app.options("*", cors(corsOptions));
+
 app.use(express.json());
 app.use(cookieParser());
 
-// app.ts, ANTES das rotas (temporário pra debug)
 app.use(async (req, res, next) => {
   // if (req.method === "OPTIONS") return res.sendStatus(204); // CORS preflight: não abrir conexão
   if (connection.readyState !== 1) {
