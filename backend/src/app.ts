@@ -71,6 +71,10 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get("/", (_req, res) => {
+  res.send("✅ API online");
+});
+
 // Spec crua (CI/SDK)
 app.get("/openapi.json", (_req, res) => {
   res.type("application/json").send(swaggerSpec);
@@ -82,13 +86,15 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
-    swaggerOptions: { persistAuthorization: true }
+    swaggerOptions: { persistAuthorization: true },
+    // usa assets da CDN em vez de arquivos locais
+    customCssUrl: "https://unpkg.com/swagger-ui-dist/swagger-ui.css",
+    customJs: [
+      "https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js",
+      "https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js",
+    ],
   })
 );
-
-app.get("/", (_req, res) => {
-  res.send("✅ API online");
-});
 
 app.use("/auth", userRoutes);
 app.use("/health", healthRoutes);
