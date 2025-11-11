@@ -6,6 +6,7 @@ import exerciseRoutes from "./routes/exercise.routes";
 import trainingDayRoutes from "./routes/trainingDay.routes";
 import trainingSessionRoutes from "./routes/trainingSession.routes";
 import healthRoutes from "./routes/health.routes";
+import { swaggerUi, swaggerSpec } from "./swagger";
 import { connection } from "mongoose";
 import db from "./database/configdb"; // ajuste o caminho se preciso
 
@@ -69,6 +70,21 @@ app.use((req, _res, next) => {
   }
   next();
 });
+
+// Spec crua (CI/SDK)
+app.get("/openapi.json", (_req, res) => {
+  res.type("application/json").send(swaggerSpec);
+});
+
+// UI
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    swaggerOptions: { persistAuthorization: true }
+  })
+);
 
 app.get("/", (_req, res) => {
   res.send("✅ API online");

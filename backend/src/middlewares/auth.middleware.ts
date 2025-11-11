@@ -19,7 +19,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const token = m[1].trim();
   if (!token) {
-    return res.status(401).json({ error: "Token faltando 2" });
+    return res.status(401).json({ error: "Token faltando" });
   }
 
   try {
@@ -28,7 +28,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   return next();
 } catch (err: any) {
   if (err?.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'Token expirado Middleware' });
+    return res.status(401).json({ error: 'Token expirado. Faça Login novamente.' });
   }
   return res.status(401).json({ error: 'Token inválido' });
 }
